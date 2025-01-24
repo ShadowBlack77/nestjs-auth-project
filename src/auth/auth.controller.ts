@@ -1,6 +1,6 @@
-import { Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard, LocalAuthGuard, RefreshAuthGuard } from './guards';
+import { GoogleAuthGuard, JwtAuthGuard, LocalAuthGuard, RefreshAuthGuard } from './guards';
 import { Response } from 'express';
 import { Public } from './decorators';
 
@@ -27,5 +27,23 @@ export class AuthController {
   @Post("/sign-out")
   public signOut(@Req() req: any, @Res() res: Response) {
     return this.authService.signOut(req, res);
+  }
+
+  @Public()
+  @UseGuards(GoogleAuthGuard)
+  @Get('/google/login')
+  public googleLogin() {
+
+  }
+
+  @Public()
+  @UseGuards(GoogleAuthGuard)
+  @Get('/google/callback')
+  public async googleCallback(@Req() req: any, @Res() res: any) {
+    const response: any = await this.authService.login(req, res);
+
+    console.log(response);
+
+    res.redirect(`http://localhost:5173?token=${response.accessToken}`);
   }
 }

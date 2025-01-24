@@ -6,6 +6,7 @@ import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import refreshJwtConfig from './config/refresh-jwt.config';
 import { ConfigType } from '@nestjs/config';
+import { CreateUserDto } from 'src/user/dto';
 
 @Injectable()
 export class AuthService {
@@ -55,6 +56,16 @@ export class AuthService {
     };
 
     return currentUser;
+  }
+
+  public async validateGoogleUser(googleUser: CreateUserDto) {
+    const user = await this.userService.findByEmail(googleUser.email);
+
+    if (user) {
+      return user;
+    }
+
+    return await this.userService.create(googleUser);
   }
 
   public async login(req: any, res: Response) {
