@@ -109,9 +109,10 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 - npm install @types/uuid
 
 ## Do Zrobienia:
-  Resetowanie hasła
   2fa (Google Authenticator)
   maksymalnie 3 próby logowania
+
+  Walidacja Dto oraz typy
 
 ## Możliwe plany:
   Jak rozwiązać problem, aby token weryfikacyjny dotyczący emaila był zahashowany jednoczesnie bez przekazywania ID użytkownika?

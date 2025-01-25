@@ -5,6 +5,7 @@ import googleOauthConfig from "../config/google-oauth.config";
 import { ConfigType } from "@nestjs/config";
 import { AuthService } from "../auth.service";
 import { VerifyCallback } from "passport-jwt";
+import { AuthProvider } from "../enum";
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy) {
@@ -26,6 +27,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
       email: profile.emails[0].value,
       username: profile.name.givenName,
       avatarUrl: profile.photos[0].value,
+      authProvider: AuthProvider.GOOGLE_PROVIDER,
       password: ''
     });
 

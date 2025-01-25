@@ -80,4 +80,21 @@ export class UserService {
       throw new BadRequestException("Cannot activate user account");
     }
   }
+
+  public async updatePassword(userId: number, newPassword: string) {
+    try {
+
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+      return await this.userRepository.update({
+        id: userId
+      }, {
+        password: hashedNewPassword
+      })
+    } catch(err) {
+      console.log(err);
+
+      throw new BadRequestException("Cannot change user password");
+    }
+  }
 }

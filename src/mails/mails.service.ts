@@ -6,6 +6,7 @@ import { EmailTokens } from 'src/entities';
 import { Repository } from 'typeorm';
 import { EmailTokensTypes } from 'src/auth/enum';
 import { UserService } from 'src/user/user.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class MailsService {
@@ -16,14 +17,14 @@ export class MailsService {
     @InjectRepository(EmailTokens) private readonly emailTokensRepository: Repository<EmailTokens>
   ) {}
 
-  public async sendMail(to: string, subject: string, context: { token: string }, template: string) {
+  public async sendMail(to: string, subject: string, context: { tokenId: string, token: string }, template: string) {
     try {
       await this.mailService.sendMail({
         to: to,
         from: 'dogry.bonus@op.pl',
         subject: subject,
         template: template,
-        context: { token: context.token }
+        context: { tokenId: context.tokenId, token: context.token}
       });
 
       return { content: "email sended successfully" };
@@ -35,7 +36,6 @@ export class MailsService {
   }
 
   public async generateEmailTokens(userId: number, emailType: EmailTokensTypes) {
-
     const user = await this.userService.findOne(userId);
 
     if (!user) {
@@ -43,12 +43,16 @@ export class MailsService {
     }
 
     const token = uuidv4();
+    const tokenId = uuidv4();
     const expiresAt = new Date();
+
+    const hashedToken = await bcrypt.hash(token, 10);
 
     expiresAt.setMinutes(expiresAt.getMinutes() + 15);
 
     const newTokenObject = {
-      token: token,
+      token: hashedToken,
+      tokenId: tokenId,
       user: user,
       expiresAt: expiresAt,
       type: emailType
@@ -58,20 +62,28 @@ export class MailsService {
 
     await this.emailTokensRepository.save(savedToken);
 
-    return token;
+    return { token, tokenId };
   }
 
-  public async checkTokenValidation(token: string) {
-
+  public async checkTokenValidation(tokenId: string, token: string, newPassword?: string) {
     const emailToken = await this.emailTokensRepository.findOne({
       where: {
-        token: token
+        tokenId: tokenId
       },
       relations: ['user'],
     });
 
     if (!emailToken) {
       throw new UnauthorizedException("Invlaid or expired token");
+    }
+
+    const hashedToken = emailToken.token;
+    const emailType = emailToken.type;
+
+    const isTokenMatched = await bcrypt.compare(token, hashedToken);
+
+    if (!isTokenMatched) {
+      throw new UnauthorizedException("Token invalid");
     }
 
     if (new Date() > emailToken.expiresAt) {
@@ -84,12 +96,20 @@ export class MailsService {
       throw new UnauthorizedException("User not found");
     }
 
-    await this.userService.updateEmailVerification(user.id, true);
-
     await this.emailTokensRepository.delete({
-      token: token
+      tokenId: tokenId
     });
 
-    return { content: 'Email successfully verified!' }; 
+    if (emailType === EmailTokensTypes.VERIFY_EMAIL) {
+      await this.userService.updateEmailVerification(user.id, true);
+
+      return { content: 'Email successfully verified!' }; 
+    }
+
+    if (emailType === EmailTokensTypes.RESET_PASSWORD && newPassword) {
+      await this.userService.updatePassword(user.id, newPassword)
+
+      return { content: 'Password successfully changed!' }; 
+    }
   }
 }

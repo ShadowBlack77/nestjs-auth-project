@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard, JwtAuthGuard, LocalAuthGuard, RefreshAuthGuard } from './guards';
 import { Response } from 'express';
@@ -44,14 +44,26 @@ export class AuthController {
   }
 
   @Public()
-  @Post('/reset-password')
-  public resetPassword(@Body() resetPasswordDto: any) {
-    // return this.mailService.sendMail(resetPasswordDto.email, 'Reset Password', { token: '' }, 'email-verification');
+  @Post('/send-email-verification')
+  public sendEmailVerification() {
+
   }
 
   @Public()
-  @Get("/email-verify")
-  public emailVerification(@Query("token") token: string) {
-    return this.authService.emailVerify(token);
+  @Post('/reset-password')
+  public resetPassword(@Body() resetPasswordDto: any) {
+    return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Public()
+  @Patch('/change-password/:tokenId')
+  public changePassword(@Param('tokenId') tokenId: string, @Query('token') token: string, @Body() changePassworDto: any) {
+    return this.authService.changePassword(tokenId, token, changePassworDto);
+  }
+
+  @Public()
+  @Get('/email-verify')
+  public emailVerification(@Query('tokenId') tokenId: string, @Query('token') token: string) {
+    return this.authService.emailVerify(tokenId, token);
   }
 }

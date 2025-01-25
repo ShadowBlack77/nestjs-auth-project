@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { compare } from 'bcrypt';
 import { UserService } from 'src/user/user.service';
 import * as argon2 from "argon2";
@@ -8,7 +8,8 @@ import refreshJwtConfig from './config/refresh-jwt.config';
 import { ConfigType } from '@nestjs/config';
 import { CreateUserDto } from 'src/user/dto';
 import { MailsService } from 'src/mails/mails.service';
-import { EmailTokensTypes } from './enum';
+import { AuthProvider, EmailTokensTypes } from './enum';
+import { Exception } from 'handlebars';
 
 @Injectable()
 export class AuthService {
@@ -72,16 +73,20 @@ export class AuthService {
   }
 
   public async login(req: any, res: Response, isGoogleLogin: boolean = false) {
+
+    // User Informations
     const userId = req.user.id;
     const userEmail = req.user.email;
     const emailVerified = req.user.emailVerified;
+
+    // JWT and Refresh tokens genereted by localy method
     const tokens = await this.generateTokens(userId);
     const hashedAccessToken = await argon2.hash(tokens.accessToken);
     const hashedRefreshToken = await argon2.hash(tokens.refreshToken);
 
     if (!emailVerified && !isGoogleLogin) {
-      const token = await this.mailsService.generateEmailTokens(userId, EmailTokensTypes.VERIFY_EMAIL);
-      this.mailsService.sendMail(userEmail, 'Email Verification', { token }, 'email-verification');
+      const { tokenId, token } = await this.mailsService.generateEmailTokens(userId, EmailTokensTypes.VERIFY_EMAIL);
+      this.mailsService.sendMail(userEmail, 'Email Verification', { tokenId, token }, 'email-verification');
 
       return res.status(201).json({
         email: userEmail,
@@ -90,10 +95,10 @@ export class AuthService {
     }
 
     if (!emailVerified && isGoogleLogin) {
-      const token = await this.mailsService.generateEmailTokens(userId, EmailTokensTypes.VERIFY_EMAIL);
-      this.mailsService.sendMail(userEmail, 'Email Verification', { token }, 'email-verification');
+      const { tokenId, token } = await this.mailsService.generateEmailTokens(userId, EmailTokensTypes.VERIFY_EMAIL);
+      this.mailsService.sendMail(userEmail, 'Email Verification', { tokenId, token }, 'email-verification');
 
-      return res.redirect(`http://localhost:5173?email-verified=${emailVerified}`);
+      return res.redirect(`http://localhost:5173?email=${userEmail}&email-verified=${emailVerified}`);
     }
 
     await this.userService.updateHashedAccessToken(userId, hashedAccessToken);
@@ -176,8 +181,26 @@ export class AuthService {
     });
   }
 
-  public async emailVerify(token: string) {
-    return await this.mailsService.checkTokenValidation(token);
+  public async emailVerify(tokenId: string, token: string) {
+    return await this.mailsService.checkTokenValidation(tokenId, token);
+  }
+
+  public async resetPassword(resetPasswordDto: any) {
+    const userEmail = resetPasswordDto.email;
+
+    const user = await this.userService.findByEmail(userEmail);
+    
+    if (user.authProvider === AuthProvider.GOOGLE_PROVIDER) {
+      throw new BadRequestException("Google accounts cant't change password!");
+    }
+    
+    const { tokenId, token } = await this.mailsService.generateEmailTokens(user.id, EmailTokensTypes.RESET_PASSWORD);
+    return this.mailsService.sendMail(userEmail, 'Reset Password', { tokenId, token }, 'reset-password');
+  }
+
+  public async changePassword(tokenId: string, token: string, changePassworDto: any) {
+    const newPassword = changePassworDto.newPassword;
+    return await this.mailsService.checkTokenValidation(tokenId, token, newPassword);
   }
 
   private async generateTokens(userId: number) {

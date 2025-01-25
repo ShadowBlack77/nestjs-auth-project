@@ -1,4 +1,5 @@
-import { IsEmail, IsOptional, IsString, IsUrl } from "class-validator";
+import { IsEmail, IsEnum, IsOptional, IsString, IsUrl } from "class-validator";
+import { AuthProvider } from "src/auth/enum";
 
 export class CreateUserDto {
 
@@ -16,4 +17,7 @@ export class CreateUserDto {
 
   @IsString()
   readonly password: string
+
+  @IsEnum(AuthProvider)
+  readonly authProvider: AuthProvider;
 }

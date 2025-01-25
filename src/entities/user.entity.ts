@@ -1,4 +1,4 @@
-import { Role } from "src/auth/enum";
+import { AuthProvider, Role } from "src/auth/enum";
 import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { EmailTokens } from "./email_tokens.entity";
 
@@ -29,6 +29,13 @@ export class User {
     default: Role.USER
   })
   readonly role: Role;
+
+  @Column({
+    type: 'enum',
+    enum: AuthProvider,
+    default: AuthProvider.LOCAL_PROVIDER
+  })
+  readonly authProvider: AuthProvider;
 
   @Column({ nullable: true })
   readonly hashedRefreshToken: string;

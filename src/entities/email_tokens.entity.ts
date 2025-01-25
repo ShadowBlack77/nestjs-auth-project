@@ -11,6 +11,9 @@ export class EmailTokens {
   @Column({ unique: true })
   readonly token: string;
 
+  @Column({ unique: true })
+  readonly tokenId: string;
+
   @Column()
   readonly expiresAt: Date;
 
