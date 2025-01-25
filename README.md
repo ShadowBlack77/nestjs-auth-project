@@ -101,10 +101,17 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 - npm i -D @types/passport-jwt
 - npm i passport-google-oauth20
 - npm i -D @types/passport-google-oauth20
+- npm i --save @nestjs-modules/mailer nodemailer
+- npm i --save-dev @types/nodemailer
+- npm i --save handlebars
+- npm install @nestjs-modules/mailer handlebars
+- npm install uuid
+- npm install @types/uuid
 
-##Do Zrobienia:
-  Google Auth
-  Testowanie Routów (Wszystkich jeszcze raz)
-  Przejrzenie dokładnie kodu, czy czegoś nie pominiąłem
-  Weryfikacja Adresu Email
+## Do Zrobienia:
+  Resetowanie hasła
   2fa (Google Authenticator)
+  maksymalnie 3 próby logowania
+
+## Możliwe plany:
+  Jak rozwiązać problem, aby token weryfikacyjny dotyczący emaila był zahashowany jednoczesnie bez przekazywania ID użytkownika?

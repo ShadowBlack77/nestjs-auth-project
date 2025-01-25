@@ -7,6 +7,8 @@ import { JwtService } from '@nestjs/jwt';
 import refreshJwtConfig from './config/refresh-jwt.config';
 import { ConfigType } from '@nestjs/config';
 import { CreateUserDto } from 'src/user/dto';
+import { MailsService } from 'src/mails/mails.service';
+import { EmailTokensTypes } from './enum';
 
 @Injectable()
 export class AuthService {
@@ -14,7 +16,8 @@ export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
-    @Inject(refreshJwtConfig.KEY) private readonly refreshJwtConfiguration: ConfigType<typeof refreshJwtConfig>
+    @Inject(refreshJwtConfig.KEY) private readonly refreshJwtConfiguration: ConfigType<typeof refreshJwtConfig>,
+    private readonly mailsService: MailsService
   ) {}
 
   public async validateUser(email: string, password: string) {
@@ -30,7 +33,7 @@ export class AuthService {
       throw new UnauthorizedException("Invalid Credentials");
     }
 
-    return { id: user.id };
+    return { id: user.id, email: user.email, emailVerified: user.emailVerified };
   }
 
   public async validateJwtUser(userId: number, accessToken: string) {
@@ -68,11 +71,30 @@ export class AuthService {
     return await this.userService.create(googleUser);
   }
 
-  public async login(req: any, res: Response) {
+  public async login(req: any, res: Response, isGoogleLogin: boolean = false) {
     const userId = req.user.id;
+    const userEmail = req.user.email;
+    const emailVerified = req.user.emailVerified;
     const tokens = await this.generateTokens(userId);
     const hashedAccessToken = await argon2.hash(tokens.accessToken);
     const hashedRefreshToken = await argon2.hash(tokens.refreshToken);
+
+    if (!emailVerified && !isGoogleLogin) {
+      const token = await this.mailsService.generateEmailTokens(userId, EmailTokensTypes.VERIFY_EMAIL);
+      this.mailsService.sendMail(userEmail, 'Email Verification', { token }, 'email-verification');
+
+      return res.status(201).json({
+        email: userEmail,
+        emailVerified: emailVerified
+      })
+    }
+
+    if (!emailVerified && isGoogleLogin) {
+      const token = await this.mailsService.generateEmailTokens(userId, EmailTokensTypes.VERIFY_EMAIL);
+      this.mailsService.sendMail(userEmail, 'Email Verification', { token }, 'email-verification');
+
+      return res.redirect(`http://localhost:5173?email-verified=${emailVerified}`);
+    }
 
     await this.userService.updateHashedAccessToken(userId, hashedAccessToken);
     await this.userService.updateHashedRefreshToken(userId, hashedRefreshToken);
@@ -85,10 +107,15 @@ export class AuthService {
       sameSite: 'lax'
     });
 
-    return res.status(201).json({
-      id : userId,
-      accessToken: tokens.accessToken,
-    });
+    if (!isGoogleLogin) {
+      return res.status(201).json({
+        id : userId,
+        accessToken: tokens.accessToken,
+        emailVerified: emailVerified
+      });
+    }
+
+    return res.redirect(`http://localhost:5173?token=${tokens.accessToken}`);
   }
 
   public async signOut(req: any, res: Response) {
@@ -147,6 +174,10 @@ export class AuthService {
       id : userId,
       accessToken: tokens.accessToken,
     });
+  }
+
+  public async emailVerify(token: string) {
+    return await this.mailsService.checkTokenValidation(token);
   }
 
   private async generateTokens(userId: number) {

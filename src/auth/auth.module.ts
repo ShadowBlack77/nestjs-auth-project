@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/entities';
+import { EmailTokens, User } from 'src/entities';
 import { UserService } from 'src/user/user.service';
 import { GoogleStrategy, JwtStrategy, LocalStrategy, RefreshJwtStrategy } from './strategies';
 import { JwtModule } from '@nestjs/jwt';
@@ -13,10 +13,11 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './guards';
 import { RolesGuard } from './guards/roles/roles.guard';
 import googleOauthConfig from './config/google-oauth.config';
+import { MailsService } from 'src/mails/mails.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, EmailTokens]),
     JwtModule.registerAsync(jwtConfig.asProvider()),
     ConfigModule.forFeature(jwtConfig),
     ConfigModule.forFeature(refreshJwtConfig),
@@ -30,6 +31,7 @@ import googleOauthConfig from './config/google-oauth.config';
     JwtStrategy,
     RefreshJwtStrategy,
     GoogleStrategy,
+    MailsService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard

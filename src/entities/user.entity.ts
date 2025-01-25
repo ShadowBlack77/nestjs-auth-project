@@ -1,5 +1,6 @@
 import { Role } from "src/auth/enum";
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { EmailTokens } from "./email_tokens.entity";
 
 @Entity()
 export class User {
@@ -37,4 +38,10 @@ export class User {
 
   @Column({ default: false })
   readonly emailVerified: boolean;
+
+  @Column({ name: '2fa', default: false })
+  readonly tfa: boolean;
+
+  @OneToMany(() => EmailTokens, (emailTokens) => emailTokens.user)
+  readonly emailTokens: EmailTokens[];
 }

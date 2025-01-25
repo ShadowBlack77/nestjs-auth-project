@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard, JwtAuthGuard, LocalAuthGuard, RefreshAuthGuard } from './guards';
 import { Response } from 'express';
@@ -40,10 +40,18 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @Get('/google/callback')
   public async googleCallback(@Req() req: any, @Res() res: any) {
-    const response: any = await this.authService.login(req, res);
+    return await this.authService.login(req, res, true);
+  }
 
-    console.log(response);
+  @Public()
+  @Post('/reset-password')
+  public resetPassword(@Body() resetPasswordDto: any) {
+    // return this.mailService.sendMail(resetPasswordDto.email, 'Reset Password', { token: '' }, 'email-verification');
+  }
 
-    res.redirect(`http://localhost:5173?token=${response.accessToken}`);
+  @Public()
+  @Get("/email-verify")
+  public emailVerification(@Query("token") token: string) {
+    return this.authService.emailVerify(token);
   }
 }

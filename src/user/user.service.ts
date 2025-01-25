@@ -8,7 +8,9 @@ import { CreateUserDto } from './dto';
 @Injectable()
 export class UserService {
 
-  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>
+  ) {}
 
   public async create(createUserDto: CreateUserDto) {
     try {
@@ -63,5 +65,19 @@ export class UserService {
     }, {
       hashedRefreshToken
     });
+  }
+
+  public async updateEmailVerification(userId: number, verifiedStatus: boolean) {
+    try {
+      return await this.userRepository.update({
+        id: userId
+      }, {
+        emailVerified: verifiedStatus
+      });
+    } catch(err) {
+      console.log(err);
+
+      throw new BadRequestException("Cannot activate user account");
+    }
   }
 }

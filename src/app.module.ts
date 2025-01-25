@@ -3,7 +3,8 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './entities';
+import { EmailTokens, User } from './entities';
+import { MailsModule } from './mails/mails.module';
 
 @Module({
   imports: [
@@ -15,11 +16,11 @@ import { User } from './entities';
       url: process.env.DB_URL,
       type: "postgres",
       port: +process.env.PORT,
-      entities: [User],
+      entities: [User, EmailTokens],
       synchronize: true,
     }),
     UserModule, 
-    AuthModule
+    AuthModule, MailsModule
   ],
 })
 export class AppModule {}
