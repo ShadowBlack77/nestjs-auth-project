@@ -3,8 +3,6 @@ import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { Public, Roles } from 'src/auth/decorators';
 import { Role } from 'src/auth/enum';
-import { JwtAuthGuard } from 'src/auth/guards';
-import { MailsService } from 'src/mails/mails.service';
 
 @Controller('user')
 export class UserController {

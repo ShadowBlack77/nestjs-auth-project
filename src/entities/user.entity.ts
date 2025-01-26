@@ -53,8 +53,17 @@ export class User {
   @Column({ name: '2faSecret', nullable: true, default: null })
   readonly tfaSecret: string;
 
+  @Column({ default: 0 })
+  readonly failedLoginAttemps: number;
+
+  @Column({ default: false })
+  readonly isAccountLocked: boolean;
+
+  @Column({ nullable: true })
+  readonly lastFailedLogin: Date;
+
   @OneToOne(() => LoginSession, (loginSession) => loginSession.user)
-  readonly loginSession: LoginSession
+  readonly loginSession: LoginSession;
 
   @OneToMany(() => EmailTokens, (emailTokens) => emailTokens.user)
   readonly emailTokens: EmailTokens[];

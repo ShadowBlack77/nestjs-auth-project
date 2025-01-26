@@ -108,11 +108,83 @@ export class UserService {
     } catch(err) {
       console.log(err);
 
-      throw new BadRequestException("Cannot change user password");
+      throw new BadRequestException("Cannot enable 2fa");
     }
   }
 
-  public async disable2fa() {
+  public async disable2fa(userId: number) {
+    try {
+      return await this.userRepository.update({
+        id: userId
+      }, {
+        tfa: false,
+        tfaSecret: null
+      });
+    } catch(err) {
+      console.log(err);
 
+      throw new BadRequestException("Cannot disable 2fa");
+    }
+  }
+
+  public async failedLoginAttempt(userId: number, lastFailedLoginDate: Date, failedLoginAttemps: number) {
+    try {
+      const newFailedLoginAttempsValue = failedLoginAttemps += 1;
+      let isAccountBlocked: boolean = false;
+
+      if (newFailedLoginAttempsValue >= parseInt(process.env.ACCOUNT_MAX_FAILED_ATTEMPS)) {
+        isAccountBlocked = true;
+      }
+
+      if (isAccountBlocked) {
+        return await this.userRepository.update({
+          id: userId
+        }, {
+          failedLoginAttemps: newFailedLoginAttempsValue,
+          isAccountLocked: isAccountBlocked
+        });
+      } else {
+        return await this.userRepository.update({
+          id: userId
+        }, {
+          failedLoginAttemps: newFailedLoginAttempsValue,
+          lastFailedLogin: lastFailedLoginDate
+        });
+      }
+    } catch(err) {
+      console.log(err);
+
+      throw new BadRequestException('Something went wrong');
+    }
+  }
+
+  public async clearFailedAttemps(userId: number) {
+    try {
+      return await this.userRepository.update({
+        id: userId
+      }, {
+        failedLoginAttemps: 0
+      });
+    } catch(err) {
+      console.log(err);
+
+      throw new BadRequestException('Cannot clear failed attempts');
+    }
+  }
+
+  public async unlockUserAccount(userId: number) {
+    try {
+      return await this.userRepository.update({
+        id: userId
+      }, {
+        failedLoginAttemps: 0,
+        lastFailedLogin: null,
+        isAccountLocked: false
+      });
+    } catch(err) {
+      console.log(err);
+
+      throw new BadRequestException('Something went wrong');
+    }
   }
 }

@@ -28,14 +28,36 @@ export class AuthService {
     const user = await this.userService.findByEmail(email);
 
     if (!user) {
-      throw new UnauthorizedException("User not found");
+      throw new UnauthorizedException("Invalid Credentials");
     }
 
     const isPasswordMatch = await compare(password, user.password);
 
+    if (user.isAccountLocked) {
+      const currentTime = new Date();
+      const lastFiledAttemp = user.lastFailedLogin;
+
+      const isAccountUnlocked = currentTime.getTime() - lastFiledAttemp.getTime() >= parseInt(process.env.ACCOUNT_TIME_BLOCK);
+
+      if (!isAccountUnlocked) {
+        throw new UnauthorizedException("The account has been blocked due to too many failed login attempts. Please wait a while to try logging in again. If you were not the one who logged in just now, we recommend that you change your password as soon as possible.");
+      }
+
+      await this.userService.unlockUserAccount(user.id);
+    }
+
     if (!isPasswordMatch) {
+      if (!user.isAccountLocked) {
+        const lastFailedLogin = new Date(); 
+        const failedLoginAttemps = user.failedLoginAttemps;
+  
+        await this.userService.failedLoginAttempt(user.id, lastFailedLogin, failedLoginAttemps);
+      }
+
       throw new UnauthorizedException("Invalid Credentials");
     }
+
+    await this.userService.clearFailedAttemps(user.id);
 
     return { id: user.id, email: user.email, emailVerified: user.emailVerified, tfa: user.tfa };
   }
@@ -289,6 +311,22 @@ export class AuthService {
     await this.userService.enable2fa(user.id, secret);
 
     return res.status(201).json({ content: '2fa-enabled', qrCode: qrCode });
+  }
+
+  public async disable2fa(req: any, res: any) {
+    const user = await this.userService.findOne(req.user.id);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!user.tfa) {
+      throw new BadRequestException('2fa was not enabled, nothing change');
+    }
+
+    await this.userService.disable2fa(user.id);
+
+    return res.status(201).json({ content: '2fa-disabled' });
   }
 
   private async generateTokens(userId: number) {

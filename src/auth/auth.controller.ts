@@ -71,6 +71,11 @@ export class AuthController {
     return this.authService.enable2fa(req, res);
   }
 
+  @Post('/disable-2fa')
+  public disable2fa(@Req() req: any, @Res() res: Response) {
+    return this.authService.disable2fa(req, res);
+  }
+
   @Public()
   @Post('/verify-2fa')
   public verify(@Body() tfaDto: any, @Res() res: Response) {
