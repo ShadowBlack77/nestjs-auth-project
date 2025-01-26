@@ -34,7 +34,7 @@ export class AuthService {
       throw new UnauthorizedException("Invalid Credentials");
     }
 
-    return { id: user.id, email: user.email, emailVerified: user.emailVerified };
+    return { id: user.id, email: user.email, emailVerified: user.emailVerified, tfa: user.tfa };
   }
 
   public async validateJwtUser(userId: number, accessToken: string) {
@@ -78,11 +78,7 @@ export class AuthService {
     const userId = req.user.id;
     const userEmail = req.user.email;
     const emailVerified = req.user.emailVerified;
-
-    // JWT and Refresh tokens genereted by localy method
-    const tokens = await this.generateTokens(userId);
-    const hashedAccessToken = await argon2.hash(tokens.accessToken);
-    const hashedRefreshToken = await argon2.hash(tokens.refreshToken);
+    const is2faEnabled = req.user.tfa;
 
     if (!emailVerified && !isGoogleLogin) {
       const { tokenId, token } = await this.mailsService.generateEmailTokens(userId, EmailTokensTypes.VERIFY_EMAIL);
@@ -100,6 +96,24 @@ export class AuthService {
 
       return res.redirect(`http://localhost:5173?email=${userEmail}&email-verified=${emailVerified}`);
     }
+
+    if (is2faEnabled) {
+      // Jeżeli jest 2FA uruchmione, należy NIE LOGOWAĆ użytkownika bez podania kodu z Google Authenticatora. 
+      // Jeżeli użtywkonika ma uruchomione 2FA musi być to inne URL do logowania, proces logowania jest zupełnie inny, tokeny generowane są dopiero w momencie walidacji nie tylko hasła ale i również kodu wygenerowanego przez aplikację Google Authenticator.
+
+      // Jeżeli 2FA jest uruchomine wysyła odpowiedź zawierającą informację na temat wyamaganego procesu 2FA
+      // Po otrzymaniu informacji na temat 2FA FE powinno przekierować użytkownika na route /auth/2fa/validation, gdzie zobaczy tylko i wyłacznie pole do podania KODU, po którym użytkownik zostanie zwalidowany i otrzyma w odpowiedzi zwrotnej access-token oraz refresh-token (O ile kod jest poprawny)
+      // Wtedy logowanie następują z innego Routa: POST[/2fa/validate]
+      return res.status(201).json({
+        status: '2FA_REQUIRED',
+        content: 'Two-factory authentication required.'
+      })
+    }
+
+    // JWT and Refresh tokens genereted by localy method
+    const tokens = await this.generateTokens(userId);
+    const hashedAccessToken = await argon2.hash(tokens.accessToken);
+    const hashedRefreshToken = await argon2.hash(tokens.refreshToken);
 
     await this.userService.updateHashedAccessToken(userId, hashedAccessToken);
     await this.userService.updateHashedRefreshToken(userId, hashedRefreshToken);
