@@ -107,9 +107,10 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 - npm install @nestjs-modules/mailer handlebars
 - npm install uuid
 - npm install @types/uuid
+- npm i qrcode otplib
+- npm i --save-dev @types/qrcode
 
 ## Do Zrobienia:
-  2fa (Google Authenticator)
   maksymalnie 3 próby logowania
 
   Walidacja Dto oraz typy

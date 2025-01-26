@@ -3,8 +3,9 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmailTokens, User } from './entities';
+import { EmailTokens, LoginSession, User } from './entities';
 import { MailsModule } from './mails/mails.module';
+import { LoginSessionModule } from './login-session/login-session.module';
 
 @Module({
   imports: [
@@ -16,11 +17,11 @@ import { MailsModule } from './mails/mails.module';
       url: process.env.DB_URL,
       type: "postgres",
       port: +process.env.PORT,
-      entities: [User, EmailTokens],
+      entities: [User, EmailTokens, LoginSession],
       synchronize: true,
     }),
     UserModule, 
-    AuthModule, MailsModule
+    AuthModule, MailsModule, LoginSessionModule
   ],
 })
 export class AppModule {}

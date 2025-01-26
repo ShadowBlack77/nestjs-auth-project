@@ -1,6 +1,7 @@
 import { AuthProvider, Role } from "src/auth/enum";
-import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { EmailTokens } from "./email_tokens.entity";
+import { LoginSession } from "./login_session.entity";
 
 @Entity()
 export class User {
@@ -48,6 +49,12 @@ export class User {
 
   @Column({ name: '2fa', default: false })
   readonly tfa: boolean;
+
+  @Column({ name: '2faSecret', nullable: true, default: null })
+  readonly tfaSecret: string;
+
+  @OneToOne(() => LoginSession, (loginSession) => loginSession.user)
+  readonly loginSession: LoginSession
 
   @OneToMany(() => EmailTokens, (emailTokens) => emailTokens.user)
   readonly emailTokens: EmailTokens[];

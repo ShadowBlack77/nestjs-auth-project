@@ -9,7 +9,9 @@ import { ConfigType } from '@nestjs/config';
 import { CreateUserDto } from 'src/user/dto';
 import { MailsService } from 'src/mails/mails.service';
 import { AuthProvider, EmailTokensTypes } from './enum';
-import { Exception } from 'handlebars';
+import { authenticator } from 'otplib';
+import * as qrcode from 'qrcode';
+import { LoginSessionService } from 'src/login-session/login-session.service';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +20,8 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     @Inject(refreshJwtConfig.KEY) private readonly refreshJwtConfiguration: ConfigType<typeof refreshJwtConfig>,
-    private readonly mailsService: MailsService
+    private readonly mailsService: MailsService,
+    private readonly loginSessionService: LoginSessionService
   ) {}
 
   public async validateUser(email: string, password: string) {
@@ -72,6 +75,47 @@ export class AuthService {
     return await this.userService.create(googleUser);
   }
 
+  public async validate2faAuthorization(tfaDto: any, res: Response) {
+    const authCode = tfaDto.code;
+    const loginSessionId = tfaDto.loginSessionId;
+
+    const sessionUser = await this.loginSessionService.validateLoginSessionId(loginSessionId);
+
+    if (!sessionUser) {
+      throw new UnauthorizedException('Invalid Credentials');
+    }
+
+    const user = await this.userService.findOne(sessionUser.id);
+    const isValid = this.verifyOTP(user.tfaSecret, authCode);
+
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid Credentials');
+    }
+
+    const tokens = await this.generateTokens(user.id);
+    const hashedAccessToken = await argon2.hash(tokens.accessToken);
+    const hashedRefreshToken = await argon2.hash(tokens.refreshToken);
+
+    await this.userService.updateHashedAccessToken(user.id, hashedAccessToken);
+    await this.userService.updateHashedRefreshToken(user.id, hashedRefreshToken);
+
+    res.cookie('full-nest-auth', tokens.refreshToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+      sameSite: 'lax'
+    });
+
+    await this.loginSessionService.removeLoginSessionId(user);
+
+    return res.status(201).json({
+      id : user.id,
+      accessToken: tokens.accessToken,
+      emailVerified: true
+    });
+  }
+
   public async login(req: any, res: Response, isGoogleLogin: boolean = false) {
 
     // User Informations
@@ -104,10 +148,20 @@ export class AuthService {
       // Jeżeli 2FA jest uruchomine wysyła odpowiedź zawierającą informację na temat wyamaganego procesu 2FA
       // Po otrzymaniu informacji na temat 2FA FE powinno przekierować użytkownika na route /auth/2fa/validation, gdzie zobaczy tylko i wyłacznie pole do podania KODU, po którym użytkownik zostanie zwalidowany i otrzyma w odpowiedzi zwrotnej access-token oraz refresh-token (O ile kod jest poprawny)
       // Wtedy logowanie następują z innego Routa: POST[/2fa/validate]
-      return res.status(201).json({
-        status: '2FA_REQUIRED',
-        content: 'Two-factory authentication required.'
-      })
+
+      const user = await this.userService.findOne(userId);
+      const loginSessionId = await this.loginSessionService.generateSessionLoginId(user);
+      const authProvider = user.authProvider;
+
+      if (authProvider !== AuthProvider.GOOGLE_PROVIDER) {
+        return res.status(201).json({
+          status: '2FA_REQUIRED',
+          content: 'Two-factory authentication required.',
+          sessionId: loginSessionId,
+        });
+      }
+
+      return res.redirect(`http://localhost:5173?loginSessionId=${loginSessionId}`);
     }
 
     // JWT and Refresh tokens genereted by localy method
@@ -217,6 +271,26 @@ export class AuthService {
     return await this.mailsService.checkTokenValidation(tokenId, token, newPassword);
   }
 
+  public async enable2fa(req: any, res: Response) {
+
+    const user = await this.userService.findOne(req.user.id);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (user.tfa) {
+      throw new BadRequestException('2fa already enabled');
+    }
+
+    const secret = this.generateSecret();
+    const qrCode = await this.generateQRCode(secret, user.email);
+
+    await this.userService.enable2fa(user.id, secret);
+
+    return res.status(201).json({ content: '2fa-enabled', qrCode: qrCode });
+  }
+
   private async generateTokens(userId: number) {
     const payload = { sub: userId };
     const [accessToken, refreshToken] = await Promise.all([
@@ -228,5 +302,26 @@ export class AuthService {
       accessToken,
       refreshToken
     }
+  }
+
+  private generateSecret(): string {
+    return authenticator.generateSecret();
+  }
+
+  private async generateQRCode(secret: string, email: string) {
+    try {
+      const otpAuthURL = authenticator.keyuri(email, 'FullAuthNestJs', secret);
+      const qrImage = await qrcode.toDataURL(otpAuthURL);
+
+      return qrImage
+    } catch(err) {
+      console.log(err);
+
+      throw new BadRequestException('QR Code cannot be generated');
+    }
+  }
+
+  private async verifyOTP(secret: string, token: string) {
+    return authenticator.verify({ secret, token });
   }
 }

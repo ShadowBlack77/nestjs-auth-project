@@ -31,7 +31,7 @@ export class UserService {
       where: {
         id
       },
-      select: ['id', 'username', 'email', 'avatarUrl', 'role', 'hashedAccessToken', 'hashedRefreshToken']
+      select: ['id', 'username', 'email', 'avatarUrl', 'role', 'hashedAccessToken', 'hashedRefreshToken', 'tfa', 'tfaSecret', 'authProvider']
     });
   }
 
@@ -83,7 +83,6 @@ export class UserService {
 
   public async updatePassword(userId: number, newPassword: string) {
     try {
-
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
       return await this.userRepository.update({
@@ -96,5 +95,24 @@ export class UserService {
 
       throw new BadRequestException("Cannot change user password");
     }
+  }
+
+  public async enable2fa(userId: number, tfaSecret: string) {
+    try {
+      return await this.userRepository.update({
+        id: userId
+      }, {
+        tfa: true,
+        tfaSecret: tfaSecret
+      });
+    } catch(err) {
+      console.log(err);
+
+      throw new BadRequestException("Cannot change user password");
+    }
+  }
+
+  public async disable2fa() {
+
   }
 }

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { GoogleAuthGuard, JwtAuthGuard, LocalAuthGuard, RefreshAuthGuard } from './guards';
+import { GoogleAuthGuard, LocalAuthGuard, RefreshAuthGuard } from './guards';
 import { Response } from 'express';
 import { Public } from './decorators';
 
@@ -23,7 +23,6 @@ export class AuthController {
     return this.authService.refreshToken(req, res);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post("/sign-out")
   public signOut(@Req() req: any, @Res() res: Response) {
     return this.authService.signOut(req, res);
@@ -65,5 +64,16 @@ export class AuthController {
   @Get('/email-verify')
   public emailVerification(@Query('tokenId') tokenId: string, @Query('token') token: string) {
     return this.authService.emailVerify(tokenId, token);
+  }
+
+  @Get('/enable-2fa')
+  public enable2fa(@Req() req: any, @Res() res: Response) {
+    return this.authService.enable2fa(req, res);
+  }
+
+  @Public()
+  @Post('/verify-2fa')
+  public verify(@Body() tfaDto: any, @Res() res: Response) {
+    return this.authService.validate2faAuthorization(tfaDto, res);
   }
 }
