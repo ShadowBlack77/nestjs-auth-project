@@ -6,12 +6,14 @@ import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import refreshJwtConfig from './config/refresh-jwt.config';
 import { ConfigType } from '@nestjs/config';
-import { CreateUserDto } from 'src/user/dto';
+import { CreateUserDto, TfaDto, UserRequest } from 'src/user/models';
 import { MailsService } from 'src/mails/mails.service';
 import { AuthProvider, EmailTokensTypes } from './enum';
 import { authenticator } from 'otplib';
 import * as qrcode from 'qrcode';
 import { LoginSessionService } from 'src/login-session/login-session.service';
+import { AuthRequest, ResetPasswordDto } from './models';
+import { ChangePasswordDto } from './models/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -97,7 +99,7 @@ export class AuthService {
     return await this.userService.create(googleUser);
   }
 
-  public async validate2faAuthorization(tfaDto: any, res: Response) {
+  public async validate2faAuthorization(tfaDto: TfaDto, res: Response) {
     const authCode = tfaDto.code;
     const loginSessionId = tfaDto.loginSessionId;
 
@@ -138,7 +140,7 @@ export class AuthService {
     });
   }
 
-  public async login(req: any, res: Response, isGoogleLogin: boolean = false) {
+  public async login(req: AuthRequest, res: Response, isGoogleLogin: boolean = false) {
 
     // User Informations
     const userId = req.user.id;
@@ -213,7 +215,7 @@ export class AuthService {
     return res.redirect(`http://localhost:5173?token=${tokens.accessToken}`);
   }
 
-  public async signOut(req: any, res: Response) {
+  public async signOut(req: UserRequest, res: Response) {
     const userId = req.user.id;
 
     await this.userService.updateHashedAccessToken(userId, null);
@@ -248,7 +250,7 @@ export class AuthService {
     }
   }
 
-  public async refreshToken(req: any, res: Response) {
+  public async refreshToken(req: UserRequest, res: Response) {
     const userId = req.user.id;
     const tokens = await this.generateTokens(userId);
     const hashedAccessToken = await argon2.hash(tokens.accessToken);
@@ -275,10 +277,14 @@ export class AuthService {
     return await this.mailsService.checkTokenValidation(tokenId, token);
   }
 
-  public async resetPassword(resetPasswordDto: any) {
+  public async resetPassword(resetPasswordDto: ResetPasswordDto) {
     const userEmail = resetPasswordDto.email;
 
     const user = await this.userService.findByEmail(userEmail);
+
+    if (!user) {
+      throw new BadRequestException('Email was not found');
+    }
     
     if (user.authProvider === AuthProvider.GOOGLE_PROVIDER) {
       throw new BadRequestException("Google accounts cant't change password!");
@@ -288,12 +294,12 @@ export class AuthService {
     return this.mailsService.sendMail(userEmail, 'Reset Password', { tokenId, token }, 'reset-password');
   }
 
-  public async changePassword(tokenId: string, token: string, changePassworDto: any) {
+  public async changePassword(tokenId: string, token: string, changePassworDto: ChangePasswordDto) {
     const newPassword = changePassworDto.newPassword;
     return await this.mailsService.checkTokenValidation(tokenId, token, newPassword);
   }
 
-  public async enable2fa(req: any, res: Response) {
+  public async enable2fa(req: UserRequest, res: Response) {
 
     const user = await this.userService.findOne(req.user.id);
 
@@ -313,7 +319,7 @@ export class AuthService {
     return res.status(201).json({ content: '2fa-enabled', qrCode: qrCode });
   }
 
-  public async disable2fa(req: any, res: any) {
+  public async disable2fa(req: UserRequest, res: Response) {
     const user = await this.userService.findOne(req.user.id);
 
     if (!user) {

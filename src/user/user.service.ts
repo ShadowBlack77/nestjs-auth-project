@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from './dto';
+import { CreateUserRequest } from './models';
+import { ContentResponse } from 'src/shared/models';
 
 @Injectable()
 export class UserService {
@@ -12,17 +13,22 @@ export class UserService {
     @InjectRepository(User) private readonly userRepository: Repository<User>
   ) {}
 
-  public async create(createUserDto: CreateUserDto) {
+  public async create(createUserRequest: any): Promise<ContentResponse> {
     try {
-      const user = this.userRepository.create(createUserDto);
-      const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+      if (createUserRequest.password !== createUserRequest.repeatPassword) {
+        throw new BadRequestException('Passwords are not the same');
+      }
+
+      const user = this.userRepository.create(createUserRequest);
+      const hashedPassword = await bcrypt.hash(createUserRequest.password, 10);
       const userToSave = { ...user, password: hashedPassword };
   
       await this.userRepository.save(userToSave);
   
       return { content: 'Created' };
     } catch(err) {
-      throw new BadRequestException("User with this email or username already exists");
+      throw new BadRequestException(err.message);
     }
   }
 
@@ -32,6 +38,15 @@ export class UserService {
         id
       },
       select: ['id', 'username', 'email', 'avatarUrl', 'role', 'hashedAccessToken', 'hashedRefreshToken', 'tfa', 'tfaSecret', 'authProvider']
+    });
+  }
+
+  public async getProfile(id: number) {
+    return await this.userRepository.findOne({
+      where: {
+        id
+      },
+      select: ['id', 'username', 'email', 'avatarUrl', 'role', 'tfa']
     });
   }
 
@@ -47,7 +62,8 @@ export class UserService {
     return await this.userRepository.findOne({
       where: {
         email
-      }
+      },
+      select: ['id', 'username', 'email', 'avatarUrl', 'role', 'hashedAccessToken', 'hashedRefreshToken', 'tfa', 'tfaSecret', 'authProvider', 'password', 'emailVerified']
     });
   }
 

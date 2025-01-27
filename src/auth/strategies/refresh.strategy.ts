@@ -5,6 +5,7 @@ import refreshJwtConfig from "../config/refresh-jwt.config";
 import { ConfigType } from "@nestjs/config";
 import { AuthService } from "../auth.service";
 import { Request } from "express";
+import { Payload } from "../models";
 
 @Injectable()
 export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'refresh-jwt') {
@@ -27,7 +28,7 @@ export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'refresh-jwt'
     });
   }
 
-  public validate(req: Request, payload: any) {
+  public validate(req: Request, payload: Payload) {
     const refreshToken = req.cookies['full-nest-auth'];
     const userId = payload.sub;
 

@@ -1,5 +1,5 @@
 import { AuthProvider, Role } from "src/auth/enum";
-import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { EmailTokens } from "./email_tokens.entity";
 import { LoginSession } from "./login_session.entity";
 

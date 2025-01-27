@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LoginSession } from 'src/entities';
+import { LoginSession, User } from 'src/entities';
 import { MoreThan, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
@@ -12,7 +12,7 @@ export class LoginSessionService {
     @InjectRepository(LoginSession) private readonly loginSessionRepository: Repository<LoginSession>
   ) {}
 
-  public async generateSessionLoginId(user: any) {
+  public async generateSessionLoginId(user: User) {
     try {
 
       const isLoginSessionIdExists = this.loginSessionRepository.findOne({
@@ -71,7 +71,7 @@ export class LoginSessionService {
     }
   }
 
-  public async removeLoginSessionId(user: any) {
+  public async removeLoginSessionId(user: User) {
     try {
       return await this.loginSessionRepository.delete({
         user: user

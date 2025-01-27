@@ -5,6 +5,7 @@ import jwtConfig from "../config/jwt.config";
 import { ConfigType } from "@nestjs/config";
 import { AuthService } from "../auth.service";
 import { Request } from "express";
+import { Payload } from "../models";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -21,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  public validate(req: Request, payload: any) {
+  public validate(req: Request, payload: Payload) {
     const accessToken = req.get("authorization").replace("Bearer","").trim();
     const userId = payload.sub;
 

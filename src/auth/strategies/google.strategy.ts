@@ -6,6 +6,7 @@ import { ConfigType } from "@nestjs/config";
 import { AuthService } from "../auth.service";
 import { VerifyCallback } from "passport-jwt";
 import { AuthProvider } from "../enum";
+import { Profile } from "passport";
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy) {
@@ -22,13 +23,13 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  public async validate(accessToken: string, refreshToken: string, profile: any, done: VerifyCallback){
+  public async validate(accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback){
     const user: any = await this.authService.validateGoogleUser({
       email: profile.emails[0].value,
       username: profile.name.givenName,
       avatarUrl: profile.photos[0].value,
       authProvider: AuthProvider.GOOGLE_PROVIDER,
-      password: ''
+      password: '',
     });
 
     done(null, user);

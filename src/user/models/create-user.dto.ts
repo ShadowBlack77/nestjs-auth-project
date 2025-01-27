@@ -16,7 +16,7 @@ export class CreateUserDto {
   readonly avatarUrl: string;
 
   @IsString()
-  readonly password: string
+  readonly password: string;
 
   @IsEnum(AuthProvider)
   readonly authProvider: AuthProvider;

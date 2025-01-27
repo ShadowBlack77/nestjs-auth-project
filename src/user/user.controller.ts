@@ -1,8 +1,9 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto, UpdateUserDto } from './dto';
+import { UpdateUserDto, UserRequest } from './models';
 import { Public, Roles } from 'src/auth/decorators';
 import { Role } from 'src/auth/enum';
+import { ContentResponse } from 'src/shared/models';
 
 @Controller('user')
 export class UserController {
@@ -12,13 +13,13 @@ export class UserController {
   @Public()
   @Post("/")
   @HttpCode(HttpStatus.CREATED)
-  public create(@Body() createUserDto: CreateUserDto) {
+  public create(@Body() createUserDto: any): Promise<ContentResponse> {
     return this.userService.create(createUserDto);
   }
 
   @Get("/profile")
-  public getProfile(@Req() req: any) {
-    return this.userService.findOne(req.user.id);
+  public getProfile(@Req() req: UserRequest) {
+    return this.userService.getProfile(req.user.id);
   } 
 
   @Patch("/:id")
