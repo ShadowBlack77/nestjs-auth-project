@@ -6,5 +6,6 @@ export class CreateUserRequest extends PickType(CreateUserDto, [
   'email',
   'avatarUrl',
   'password',
+  'passwordConfirmation',
   'authProvider'
 ] as const) {} 

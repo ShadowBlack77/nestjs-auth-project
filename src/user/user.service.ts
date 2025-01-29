@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { CreateUserRequest } from './models';
+import { CreateUserDto, UpdateUserDto } from './models';
 import { ContentResponse } from 'src/shared/models';
 
 @Injectable()
@@ -13,10 +13,10 @@ export class UserService {
     @InjectRepository(User) private readonly userRepository: Repository<User>
   ) {}
 
-  public async create(createUserRequest: any): Promise<ContentResponse> {
+  public async create(createUserRequest: CreateUserDto): Promise<ContentResponse> {
     try {
 
-      if (createUserRequest.password !== createUserRequest.repeatPassword) {
+      if (createUserRequest.password !== createUserRequest.passwordConfirmation) {
         throw new BadRequestException('Passwords are not the same');
       }
 
@@ -37,7 +37,18 @@ export class UserService {
       where: {
         id
       },
-      select: ['id', 'username', 'email', 'avatarUrl', 'role', 'hashedAccessToken', 'hashedRefreshToken', 'tfa', 'tfaSecret', 'authProvider']
+      select: [
+        'id', 
+        'username', 
+        'email', 
+        'avatarUrl', 
+        'role', 
+        'hashedAccessToken', 
+        'hashedRefreshToken', 
+        'tfa', 
+        'tfaSecret', 
+        'authProvider'
+      ]
     });
   }
 
@@ -46,16 +57,55 @@ export class UserService {
       where: {
         id
       },
-      select: ['id', 'username', 'email', 'avatarUrl', 'role', 'tfa']
+      select: [
+        'id', 
+        'username', 
+        'email', 
+        'avatarUrl', 
+        'role', 
+        'tfa'
+      ]
     });
   }
 
-  public async update() {
+  public async update(id: number, updateUserDto: UpdateUserDto) {
+    try {
 
+      const user = await this.userRepository.findOne({
+        where: {
+          username: updateUserDto.username
+        }
+      });
+
+      if (user) {
+        throw new BadRequestException('Username is already taken');
+      };
+
+      await this.userRepository.update({
+        id
+      }, {
+        username: updateUserDto.username,
+        avatarUrl: updateUserDto.avatarUrl
+      });
+  
+      return { content: 'updated' };
+    } catch(err) {
+      throw new BadRequestException(err.message);
+    }
   } 
 
-  public remove(id: number) {
+  public async remove(id: number) {
+    try {
+      const user = await this.findOne(id);
 
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+      
+      return { content: 'removed' };
+    } catch(err) {
+      throw new BadRequestException(err.message);
+    }
   }
 
   public async findByEmail(email: string) {
@@ -63,7 +113,20 @@ export class UserService {
       where: {
         email
       },
-      select: ['id', 'username', 'email', 'avatarUrl', 'role', 'hashedAccessToken', 'hashedRefreshToken', 'tfa', 'tfaSecret', 'authProvider', 'password', 'emailVerified']
+      select: [
+        'id', 
+        'username', 
+        'email', 
+        'avatarUrl', 
+        'role', 
+        'hashedAccessToken', 
+        'hashedRefreshToken', 
+        'tfa', 
+        'tfaSecret', 
+        'authProvider', 
+        'password', 
+        'emailVerified'
+      ]
     });
   }
 

@@ -30,6 +30,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
       avatarUrl: profile.photos[0].value,
       authProvider: AuthProvider.GOOGLE_PROVIDER,
       password: '',
+      passwordConfirmation: ''
     });
 
     done(null, user);

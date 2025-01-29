@@ -1,9 +1,11 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Req, UseGuards} from '@nestjs/common';
 import { UserService } from './user.service';
-import { UpdateUserDto, UserRequest } from './models';
+import { CreateUserRequest, UserRequest } from './models';
 import { Public, Roles } from 'src/auth/decorators';
 import { Role } from 'src/auth/enum';
 import { ContentResponse } from 'src/shared/models';
+import { UpdateUserRequest } from './models/update-user.request';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 @Controller('user')
 export class UserController {
@@ -11,10 +13,12 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post("/")
   @HttpCode(HttpStatus.CREATED)
-  public create(@Body() createUserDto: any): Promise<ContentResponse> {
-    return this.userService.create(createUserDto);
+  public create(@Body() createUserRequest: CreateUserRequest): Promise<ContentResponse> {
+    return this.userService.create(createUserRequest);
   }
 
   @Get("/profile")
@@ -22,14 +26,14 @@ export class UserController {
     return this.userService.getProfile(req.user.id);
   } 
 
-  @Patch("/:id")
-  public update(@Param("id", ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
-
+  @Patch("/")
+  public update(@Req() req: UserRequest, @Body() updateUserRequest: UpdateUserRequest) {
+    return this.userService.update(req.user.id, updateUserRequest);
   }
 
   @Roles(Role.ADMIN)
   @Delete("/:id")
   public remove(@Param("id", ParseIntPipe) id: number) {
-    
+    return this.userService.remove(id);
   }
 }

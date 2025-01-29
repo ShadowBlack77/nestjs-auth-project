@@ -48,7 +48,14 @@
 - npm install @types/uuid
 - npm i qrcode otplib
 - npm i --save-dev @types/qrcode
+- npm install @nestjs/throttler
 
-## Do Zrobienia:
-
-  Walidacja Dto oraz typy
+Logowanie za pomocą Emaila i Hasła
+Logowanie za pomocą konta Google
+Autoryzacja i autentykacja za pomocą PassportJS, JWT oraz RefreshTokena
+Weryfikacja adresu email
+Możliwość 2FA z wykorzystaniem Google Authenticatora
+Możliwość resetowania hasła
+Ograniczenie do 3 nie udanych prób logowania, po niej następuje Timeout na 15 min
+SessionID oraz tokeny z krótkim czasem, do weryfikacji wiadomości Email oraz weryfikacji 2FA
+Hashowanie hasła, Refresh Tokena oraz JWT w bazie danych

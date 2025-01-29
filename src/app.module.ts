@@ -6,9 +6,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmailTokens, LoginSession, User } from './entities';
 import { MailsModule } from './mails/mails.module';
 import { LoginSessionModule } from './login-session/login-session.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 2
+    }]),
     ConfigModule.forRoot({
       isGlobal: true,
       expandVariables: true

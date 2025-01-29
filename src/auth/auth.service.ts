@@ -61,7 +61,7 @@ export class AuthService {
 
     await this.userService.clearFailedAttemps(user.id);
 
-    return { id: user.id, email: user.email, emailVerified: user.emailVerified, tfa: user.tfa };
+    return { id: user.id, email: user.email, emailVerified: user.emailVerified, tfa: user.tfa, role: user.role };
   }
 
   public async validateJwtUser(userId: number, accessToken: string) {
@@ -93,7 +93,7 @@ export class AuthService {
     const user = await this.userService.findByEmail(googleUser.email);
 
     if (user) {
-      return user;
+      return { id: user.id, email: user.email, emailVerified: user.emailVerified, tfa: user.tfa, role: user.role };
     }
 
     return await this.userService.create(googleUser);
@@ -208,7 +208,8 @@ export class AuthService {
       return res.status(201).json({
         id : userId,
         accessToken: tokens.accessToken,
-        emailVerified: emailVerified
+        emailVerified: emailVerified,
+        role: req.user.role
       });
     }
 
