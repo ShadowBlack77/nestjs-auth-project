@@ -59,3 +59,4 @@ Możliwość resetowania hasła
 Ograniczenie do 3 nie udanych prób logowania, po niej następuje Timeout na 15 min
 SessionID oraz tokeny z krótkim czasem, do weryfikacji wiadomości Email oraz weryfikacji 2FA
 Hashowanie hasła, Refresh Tokena oraz JWT w bazie danych
+Ograniczenie ilośc zapytań/na minutę
