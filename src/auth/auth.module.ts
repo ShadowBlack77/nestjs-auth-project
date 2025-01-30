@@ -10,7 +10,7 @@ import jwtConfig from './config/jwt.config';
 import { ConfigModule } from '@nestjs/config';
 import refreshJwtConfig from './config/refresh-jwt.config';
 import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './guards';
+import { ApiKeyGuard, JwtAuthGuard } from './guards';
 import { RolesGuard } from './guards/roles/roles.guard';
 import googleOauthConfig from './config/google-oauth.config';
 import { MailsService } from 'src/mails/mails.service';
@@ -34,6 +34,10 @@ import { LoginSessionService } from 'src/login-session/login-session.service';
     GoogleStrategy,
     MailsService,
     LoginSessionService,
+    {
+      provide: APP_GUARD,
+      useClass: ApiKeyGuard
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard

@@ -61,4 +61,5 @@
 - SessionID oraz tokeny z krótkim czasem, do weryfikacji wiadomości Email oraz weryfikacji 2FA
 - Hashowanie hasła, Refresh Tokena oraz JWT w bazie danych
 - Ograniczenie ilośc zapytań/na minutę
+- API Key
 
