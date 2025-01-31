@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard, LocalAuthGuard, RefreshAuthGuard } from './guards';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { Public } from './decorators';
 import { AuthRequest, ResetPasswordRequest } from './models';
 import { TfaRequest, UserRequest } from 'src/user/models';
@@ -79,7 +79,7 @@ export class AuthController {
 
   @Public()
   @Post('/verify-2fa')
-  public verify(@Body() tfaRequest: TfaRequest, @Res() res: Response) {
-    return this.authService.validate2faAuthorization(tfaRequest, res);
+  public verify(@Body() tfaRequest: TfaRequest, @Req() req: Request, @Res() res: Response) {
+    return this.authService.validate2faAuthorization(tfaRequest, req, res);
   }
 }

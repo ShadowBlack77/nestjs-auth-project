@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, UnauthorizedException } from '
 import { compare } from 'bcrypt';
 import { UserService } from 'src/user/user.service';
 import * as argon2 from "argon2";
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import refreshJwtConfig from './config/refresh-jwt.config';
 import { ConfigType } from '@nestjs/config';
@@ -99,9 +99,9 @@ export class AuthService {
     return await this.userService.create(googleUser);
   }
 
-  public async validate2faAuthorization(tfaDto: TfaDto, res: Response) {
+  public async validate2faAuthorization(tfaDto: TfaDto, req: Request, res: Response) {
     const authCode = tfaDto.code;
-    const loginSessionId = tfaDto.loginSessionId;
+    const loginSessionId = req.cookies['login-session-id'];
 
     const sessionUser = await this.loginSessionService.validateLoginSessionId(loginSessionId);
 
@@ -128,15 +128,23 @@ export class AuthService {
       secure: false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
-      sameSite: 'lax'
+      sameSite: 'strict'
+    });
+
+    res.cookie('full-nest-auth-at', tokens.accessToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 60 * 60 * 1000,
+      path: '/',
+      sameSite: 'strict'
     });
 
     await this.loginSessionService.removeLoginSessionId(user);
 
     return res.status(201).json({
       id : user.id,
-      accessToken: tokens.accessToken,
-      emailVerified: true
+      emailVerified: true,
+      role: user.role
     });
   }
 
@@ -166,26 +174,26 @@ export class AuthService {
     }
 
     if (is2faEnabled) {
-      // Jeżeli jest 2FA uruchmione, należy NIE LOGOWAĆ użytkownika bez podania kodu z Google Authenticatora. 
-      // Jeżeli użtywkonika ma uruchomione 2FA musi być to inne URL do logowania, proces logowania jest zupełnie inny, tokeny generowane są dopiero w momencie walidacji nie tylko hasła ale i również kodu wygenerowanego przez aplikację Google Authenticator.
-
-      // Jeżeli 2FA jest uruchomine wysyła odpowiedź zawierającą informację na temat wyamaganego procesu 2FA
-      // Po otrzymaniu informacji na temat 2FA FE powinno przekierować użytkownika na route /auth/2fa/validation, gdzie zobaczy tylko i wyłacznie pole do podania KODU, po którym użytkownik zostanie zwalidowany i otrzyma w odpowiedzi zwrotnej access-token oraz refresh-token (O ile kod jest poprawny)
-      // Wtedy logowanie następują z innego Routa: POST[/2fa/validate]
-
       const user = await this.userService.findOne(userId);
       const loginSessionId = await this.loginSessionService.generateSessionLoginId(user);
       const authProvider = user.authProvider;
+
+      res.cookie('login-session-id', loginSessionId, {
+        httpOnly: true,
+        secure: false,
+        maxAge: 15 * 60 * 60 * 1000,
+        path: '/',
+        sameSite: 'strict'
+      })
 
       if (authProvider !== AuthProvider.GOOGLE_PROVIDER) {
         return res.status(201).json({
           status: '2FA_REQUIRED',
           content: 'Two-factory authentication required.',
-          sessionId: loginSessionId,
         });
       }
 
-      return res.redirect(`http://localhost:5173?loginSessionId=${loginSessionId}`);
+      return res.redirect(`http://localhost:5173`);
     }
 
     // JWT and Refresh tokens genereted by localy method
@@ -201,19 +209,26 @@ export class AuthService {
       secure: false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
-      sameSite: 'lax'
+      sameSite: 'strict'
+    });
+
+    res.cookie('full-nest-auth-at', tokens.accessToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 60 * 60 * 1000,
+      path: '/',
+      sameSite: 'strict'
     });
 
     if (!isGoogleLogin) {
       return res.status(201).json({
         id : userId,
-        accessToken: tokens.accessToken,
         emailVerified: emailVerified,
         role: req.user.role
       });
     }
 
-    return res.redirect(`http://localhost:5173?token=${tokens.accessToken}`);
+    return res.redirect(`http://localhost:5173`);
   }
 
   public async signOut(req: UserRequest, res: Response) {
@@ -227,7 +242,7 @@ export class AuthService {
       secure: false,
       maxAge: 0,
       path: '/',
-      sameSite: 'lax'
+      sameSite: 'strict'
     });
 
     res.status(201).json({ content: 'logout' });
@@ -265,12 +280,19 @@ export class AuthService {
       secure: false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
-      sameSite: 'lax'
+      sameSite: 'strict'
+    });
+
+    res.cookie('full-nest-auth-at', tokens.accessToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 60 * 60 * 1000,
+      path: '/',
+      sameSite: 'strict'
     });
 
     return res.status(201).json({
       id : userId,
-      accessToken: tokens.accessToken,
     });
   }
 

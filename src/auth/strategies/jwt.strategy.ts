@@ -15,7 +15,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly authService: AuthService
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: (req: Request) => {
+        if (req && req.cookies) {
+          return req.cookies['full-nest-auth-at'];
+        }
+
+        return null;
+      },
       secretOrKey: jwtConfiguration.secret,
       ignoreExpiration: false,
       passReqToCallback: true
@@ -23,7 +29,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   public validate(req: Request, payload: Payload) {
-    const accessToken = req.get("authorization").replace("Bearer","").trim();
+    const accessToken = req.cookies['full-nest-auth-at'];
     const userId = payload.sub;
 
     return this.authService.validateJwtUser(userId, accessToken);
