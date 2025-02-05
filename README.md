@@ -21,45 +21,20 @@
 </p>
  
 ## Run Project
-- npm run start:dev <= Dev 
-
-## Installed Libs:
-- npm i --save @nestjs/config
-- npm i --save @nestjs/typeorm typeorm
-- npm i --save pg
-- npm i bcrypt
-- npm i --save-dev @types/bcrypt
-- npm i argon2
-- npm i --save class-validator class-transformer
-- npm i --save @nestjs/mapped-types
-- npm i cookie-parser
-- npm i -D @types/cookie-parser
-- npm i --save @nestjs/passport passport passport-local
-- npm i -D @types/passport-local
-- npm i @nestjs/jwt passport-jwt
-- npm i -D @types/passport-jwt
-- npm i passport-google-oauth20
-- npm i -D @types/passport-google-oauth20
-- npm i --save @nestjs-modules/mailer nodemailer
-- npm i --save-dev @types/nodemailer
-- npm i --save handlebars
-- npm install @nestjs-modules/mailer handlebars
-- npm install uuid
-- npm install @types/uuid
-- npm i qrcode otplib
-- npm i --save-dev @types/qrcode
-- npm install @nestjs/throttler
+- npm run start
+- npm run start:dev
+- npm run start:prod
 
 ## App Features
-- Logowanie za pomocą Emaila i Hasła
-- Logowanie za pomocą konta Google
-- Autoryzacja i autentykacja za pomocą PassportJS, JWT oraz RefreshTokena
-- Weryfikacja adresu email
-- Możliwość 2FA z wykorzystaniem Google Authenticatora
-- Możliwość resetowania hasła
-- Ograniczenie do 3 nie udanych prób logowania, po niej następuje Timeout na 15 min
-- SessionID oraz tokeny z krótkim czasem, do weryfikacji wiadomości Email oraz weryfikacji 2FA
-- Hashowanie hasła, Refresh Tokena oraz JWT w bazie danych
-- Ograniczenie ilośc zapytań/na minutę
+- Login via email & password
+- login via Google
+- Authorization & Authentication via JWT & Refresh Tokens
+- Email Verification
+- Possibility to enable 2FA
+- Reset Password
+- You can log in 3 times, if you make a mistake 3 times, you will be blocked for 15 minutes
+- SessionID and short-time tokens for email and 2FA verification
+- Limitation of the number of queries/per minute
 - API Key
+- Email templates with HBS
 
