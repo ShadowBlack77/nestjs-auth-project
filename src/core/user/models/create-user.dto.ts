@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsOptional, IsString, IsUrl, Matches, Min } from "class-validator";
-import { AuthProvider } from "src/auth/enum";
+import { AuthProvider } from "src/core/auth/enum";
 
 export class CreateUserDto {
 

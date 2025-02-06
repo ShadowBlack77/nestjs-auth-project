@@ -1,19 +1,19 @@
 import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { compare } from 'bcrypt';
-import { UserService } from 'src/user/user.service';
 import * as argon2 from "argon2";
 import { Request, Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import refreshJwtConfig from './config/refresh-jwt.config';
 import { ConfigType } from '@nestjs/config';
-import { CreateUserDto, TfaDto, UserRequest } from 'src/user/models';
-import { MailsService } from 'src/mails/mails.service';
 import { AuthProvider, EmailTokensTypes } from './enum';
 import { authenticator } from 'otplib';
 import * as qrcode from 'qrcode';
-import { LoginSessionService } from 'src/login-session/login-session.service';
 import { AuthRequest, ResetPasswordDto } from './models';
 import { ChangePasswordDto } from './models/change-password.dto';
+import { UserService } from '../user/user.service';
+import { MailsService } from '../mails/mails.service';
+import { LoginSessionService } from '../login-session/login-session.service';
+import { CreateUserDto, TfaDto, UserRequest } from '../user/models';
 
 @Injectable()
 export class AuthService {

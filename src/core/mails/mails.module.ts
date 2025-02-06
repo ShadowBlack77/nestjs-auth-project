@@ -4,8 +4,8 @@ import { MailerModule, MailerService } from '@nestjs-modules/mailer';
 import { join } from 'path';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmailTokens, User } from 'src/entities';
-import { UserService } from 'src/user/user.service';
+import { EmailTokens, User } from '../entities';
+import { UserService } from '../user/user.service';
 
 @Module({
   imports: [

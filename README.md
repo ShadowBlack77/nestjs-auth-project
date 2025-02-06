@@ -38,3 +38,5 @@
 - API Key
 - Email templates with HBS
 
+## How to develop the application further?
+Using the current database containing all the most important authorization and authentication elements, you can develop the application in any way you want! However, I recommend a modular approach to avoid unnecessary chaos in the design, what do I mean? If you plan to add a Todos or products section, create a module, e.g. features, and then add submodules, e.g. todos. If you would like to see an example of such an architecture, see my other project: <b>nestjs-ecommerce-api</b>

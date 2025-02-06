@@ -4,8 +4,8 @@ import { GoogleAuthGuard, LocalAuthGuard, RefreshAuthGuard } from './guards';
 import { Request, Response } from 'express';
 import { Public } from './decorators';
 import { AuthRequest, ResetPasswordRequest } from './models';
-import { TfaRequest, UserRequest } from 'src/user/models';
 import { ChangePasswordRequest } from './models/change-password.request';
+import { TfaRequest, UserRequest } from '../user/models';
 
 @Controller('auth')
 export class AuthController {

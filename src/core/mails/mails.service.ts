@@ -2,11 +2,11 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { v4 as uuidv4 } from 'uuid';
 import { MailerService as NestMailService } from '@nestjs-modules/mailer';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EmailTokens } from 'src/entities';
 import { Repository } from 'typeorm';
-import { EmailTokensTypes } from 'src/auth/enum';
-import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
+import { UserService } from '../user/user.service';
+import { EmailTokens } from '../entities';
+import { EmailTokensTypes } from '../auth/enum';
 
 @Injectable()
 export class MailsService {

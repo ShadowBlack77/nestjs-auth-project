@@ -1,6 +1,6 @@
-import { EmailTokensTypes } from "src/auth/enum";
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user.entity";
+import { EmailTokensTypes } from "../auth/enum";
 
 @Entity()
 export class EmailTokens {

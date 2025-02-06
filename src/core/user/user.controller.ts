@@ -1,11 +1,11 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Req, UseGuards} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserRequest, UserRequest } from './models';
-import { Public, Roles } from 'src/auth/decorators';
-import { Role } from 'src/auth/enum';
 import { ContentResponse } from 'src/shared/models';
 import { UpdateUserRequest } from './models/update-user.request';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Public, Roles } from '../auth/decorators';
+import { Role } from '../auth/enum';
 
 @Controller('user')
 export class UserController {
