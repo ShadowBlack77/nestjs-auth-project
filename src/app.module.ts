@@ -9,7 +9,7 @@ import { EmailTokens, LoginSession, User } from './core/entities';
   imports: [
     ThrottlerModule.forRoot([{
       ttl: 60000,
-      limit: 2
+      limit: 60
     }]),
     ConfigModule.forRoot({
       isGlobal: true,
