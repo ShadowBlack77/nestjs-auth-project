@@ -12,16 +12,16 @@ import { UserService } from '../user/user.service';
     TypeOrmModule.forFeature([EmailTokens, User]),
     MailerModule.forRoot({
       transport: {
-        host: process.env.HOST,
-        port: +process.env.PORT,
+        host: process.env.MAILS_HOST,
+        port: +process.env.MAILS_PORT,
         secure: true,
         auth: {
-          user: process.env.USER,
-          pass: process.env.PASS
+          user: process.env.MAILS_USER,
+          pass: process.env.MAILS_PASS
         }
       },
       defaults: {
-        from: process.env.FROM
+        from: process.env.MAILS_FROM
       },
       template: {
         dir: join(__dirname, './templates'),

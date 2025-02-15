@@ -21,7 +21,7 @@ export class MailsService {
     try {
       await this.mailService.sendMail({
         to: to,
-        from: process.env.FROM,
+        from: process.env.MAILS_FROM,
         subject: subject,
         template: template,
         context: { tokenId: context.tokenId, token: context.token}
